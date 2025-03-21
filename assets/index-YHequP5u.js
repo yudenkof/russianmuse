@@ -8475,7 +8475,7 @@ function replaceRef(ctrl, ref) {
 }
 function useChain(refs, timeSteps, timeFrame = 1e3) {
   useIsomorphicLayoutEffect(() => {
-    {
+    if (timeSteps) {
       let prevDelay = 0;
       each(refs, (ref, i) => {
         const controllers = ref.current;
@@ -8492,6 +8492,25 @@ function useChain(refs, timeSteps, timeFrame = 1e3) {
             });
           });
           ref.start();
+        }
+      });
+    } else {
+      let p = Promise.resolve();
+      each(refs, (ref) => {
+        const controllers = ref.current;
+        if (controllers.length) {
+          const queues = controllers.map((ctrl) => {
+            const q = ctrl.queue;
+            ctrl.queue = [];
+            return q;
+          });
+          p = p.then(() => {
+            each(
+              controllers,
+              (ctrl, i) => each(queues[i] || [], (update2) => ctrl.queue.push(update2))
+            );
+            return Promise.all(ref.start());
+          });
         }
       });
     }
@@ -10589,20 +10608,52 @@ const jsx = jsxRuntimeExports.jsx;
 const jsxs = jsxRuntimeExports.jsxs;
 const Fragment = jsxRuntimeExports.Fragment;
 function App() {
-  const [boopedStates, setBoopedStates] = reactExports.useState({});
-  const trigger = (index) => {
-    setBoopedStates((prev) => ({
+  const [boopState, setBoopState] = reactExports.useState({});
+  const [clickState, setClickState] = reactExports.useState({});
+  const [showText, setShowText] = reactExports.useState(false);
+  const isIntroDone = reactExports.useRef(false);
+  const trigger_boop = (index) => {
+    setBoopState((prev) => ({
       ...prev,
       [index]: true
     }));
   };
+  const trigger_click = (index) => {
+    if (!isIntroDone.current) {
+      isIntroDone.current = true;
+    }
+    setClickState((prev) => ({
+      ...prev,
+      [index]: true
+    }));
+    setTimeout(() => {
+      setClickState((prev) => ({
+        ...prev,
+        [index]: false
+      }));
+    }, 150);
+    if (index === 2) {
+      setShowText(!showText);
+    }
+  };
   reactExports.useEffect(() => {
     const timeoutIds = {};
-    Object.keys(boopedStates).forEach((key) => {
+    Object.keys(boopState).forEach((key) => {
       const index = Number(key);
-      if (boopedStates[index]) {
+      if (boopState[index]) {
         timeoutIds[index] = window.setTimeout(() => {
-          setBoopedStates((prev) => ({
+          setBoopState((prev) => ({
+            ...prev,
+            [index]: false
+          }));
+        }, 150);
+      }
+    });
+    Object.keys(clickState).forEach((key) => {
+      const index = Number(key);
+      if (clickState[index]) {
+        timeoutIds[index] = window.setTimeout(() => {
+          setClickState((prev) => ({
             ...prev,
             [index]: false
           }));
@@ -10612,17 +10663,18 @@ function App() {
     return () => {
       Object.values(timeoutIds).forEach((id) => window.clearTimeout(id));
     };
-  }, [boopedStates]);
+  }, [boopState, clickState]);
   const boopstyle = (index) => useSpring({
-    transform: boopedStates[index] ? "scale(1.1)" : "scale(1)",
+    transform: boopState[index] ? "scale(1.06)" : clickState[index] ? "scale(0.9)" : "scale(1)",
     config: {
-      tension: 300,
-      friction: 10
+      tension: 400,
+      friction: 20
     }
   });
   const svg_SpringRef = useSpringRef();
   const svg_TrailRef = useSpringRef();
   const text_OpacityRef = useSpringRef();
+  const about_OpacityRef = useSpringRef();
   const svgElements = [/* @__PURE__ */ jsx("div", {
     className: "w-xs sm:w-md lg:w-lg absolute  -mt-2 sm:-mt-3",
     children: /* @__PURE__ */ jsx("svg", {
@@ -10703,13 +10755,12 @@ function App() {
       scale: 0.8
     },
     to: {
-      opacity: 1,
-      scale: 1
+      opacity: showText ? 0 : 1,
+      scale: showText ? 0.8 : 1
     },
     config: {
       duration: 700
     }
-    // Adjust duration as needed
   });
   const svg_Trail = useTrail(svgElements.length, {
     ref: svg_TrailRef,
@@ -10718,14 +10769,13 @@ function App() {
       transform: "translateY(20px)"
     },
     to: {
-      opacity: 1,
-      transform: "translateY(0px)"
+      opacity: showText ? 0 : 1,
+      transform: showText ? "translateY(20px)" : "translateY(0px)"
     },
     config: {
-      duration: 1200
+      duration: 1e3
     },
-    // Adjust duration as needed
-    delay: 300
+    delay: 200
   });
   const text_Opacity = useSpring({
     ref: text_OpacityRef,
@@ -10738,152 +10788,175 @@ function App() {
     config: {
       duration: 700
     }
-    // Adjust duration as needed
   });
-  useChain([svg_SpringRef, svg_TrailRef, text_OpacityRef], [0, 0.3, 0.9]);
+  const about_Opacity = useSpring({
+    ref: about_OpacityRef,
+    opacity: showText ? 1 : 0,
+    transform: showText ? "translateY(0)" : "translateY(20px)",
+    config: {
+      duration: 300
+    }
+  });
+  useChain(isIntroDone.current ? showText ? [svg_TrailRef, svg_SpringRef, about_OpacityRef] : [about_OpacityRef, svg_SpringRef, svg_TrailRef] : [svg_SpringRef, svg_TrailRef, text_OpacityRef], isIntroDone.current ? showText ? [0, 0.3, 0.9] : [0, 0.3, 0.9] : [0, 0.3, 0.9]);
   const memoizedCards = reactExports.useMemo(() => cards.map((card) => /* @__PURE__ */ jsx(Card, {
     card
   }, card.id)), [cards]);
   return /* @__PURE__ */ jsx(Fragment, {
     children: /* @__PURE__ */ jsxs("div", {
-      className: "flex flex-row h-dvh snap-x snap-mandatory overflow-x-scroll select-none ppsans text-silver tracking-wide",
-      children: [/* @__PURE__ */ jsx("section", {
-        className: "flex flex-row min-w-screen relative gradient snap-end ",
-        children: /* @__PURE__ */ jsxs("div", {
-          className: "flex flex-col basis-full justify-center pb-12 gap-0 text-lg lg:text-2xl",
-          children: [/* @__PURE__ */ jsx(animated.div, {
-            style: svg_Opacity,
-            className: " w-xs sm:w-md lg:w-lg fill-silver stroke-silver self-center ml-1 sm:ml-4",
-            children: /* @__PURE__ */ jsx("svg", {
-              xmlns: "http://www.w3.org/2000/svg",
-              viewBox: "0 0 558 538",
-              children: /* @__PURE__ */ jsxs("g", {
-                fill: "none",
-                "fill-rule": "evenodd",
-                transform: "translate(2.3 2.2)",
-                children: [/* @__PURE__ */ jsx("path", {
-                  strokeLinecap: "round",
-                  strokeLinejoin: "round",
-                  strokeWidth: "3",
-                  d: "M237.6 360.9c-17.4 18.4-46 31.2-55.3 23.8-9.4-7.3 41.2-66.5 111.4-115.8 70.3-49.2 126.7-56.8 136.4-49.2 9.8 7.6-1.8 24.2-27.6 43.5"
-                }), /* @__PURE__ */ jsx("path", {
-                  strokeLinecap: "round",
-                  strokeLinejoin: "round",
-                  strokeWidth: "3",
-                  d: "M396.5 283.5c2.4 18.5-12.8 56-40.2 59-27.3 3.1-28.2-58.8-1.4-57.5 26.8 1.4 6.1 49.2-10.7 67.8-16.9 18.7-38.7 29-49 16.3-10.4-12.7-5.3-56.8 18.9-52.3 12.4 2.3 9 21.9-2 37.7-10.6 15.1-53.7 40.3-68.6 28.2-14.9-12-6.2-55.8 47.3-97.7 53.4-41.9 91.1-37.1 111.7-21.8 20.5 15.2 41 89.9-25.5 172.2-66.6 82.3-119.4 75.6-146 53.2-26.5-22.5-12-82.6 9.3-109.4"
-                }), /* @__PURE__ */ jsx("path", {
-                  strokeLinecap: "round",
-                  strokeLinejoin: "round",
-                  strokeWidth: "3",
-                  d: "M280.3 399.6c-8.6 1-17.9 5-27.9 12.1-15 10.5-20 24.2-14.1 29.6 5.8 5.4 18 .1 24.9-6.5 6.9-6.6 8.8-16 4.5-18.7-4.2-2.6-10 0-14.2 6.3-4.3 6.2-2.6 18.4 7.8 8.1m34.7 0c2.4-3.5 4.3-4.8 5.6-3.9 2 1.5 1 9.3-3.5 15.2-4.4 6-13.8 14.4-17.8 10.4s1.4-23.7 21.3-45.1a149.8 149.8 0 0 1 48.8-34.4 103 103 0 0 0-18.4 24c-4.1 8.8-4.5 18 2.4 20.5 7 2.6 18-6.3 22.6-13.8 4.6-7.5 5-16.5 0-18.4-5-1.9-13 1.3-14.1 9.6-.8 5.5 1.7 7.9 7.5 7"
-                }), /* @__PURE__ */ jsx("ellipse", {
-                  cx: "259.9",
-                  cy: "427.1",
-                  className: "fill-silver",
-                  "fill-rule": "nonzero",
-                  rx: "5.9",
-                  ry: "4.3",
-                  transform: "rotate(-56 259.9 427.1)"
-                }), /* @__PURE__ */ jsx("ellipse", {
-                  cx: "350.7",
-                  cy: "396.4",
-                  className: "fill-silver",
-                  "fill-rule": "nonzero",
-                  rx: "6.9",
-                  ry: "5",
-                  transform: "rotate(-56 350.7 396.4)"
-                }), /* @__PURE__ */ jsx("path", {
-                  strokeLinecap: "round",
-                  strokeLinejoin: "round",
-                  strokeWidth: "3",
-                  d: "M226.2 323.8a212 212 0 0 1-13.2-14c-6-7.1-11.6-14-11-18.2.6-4.2 19.7-23.7 58.5-49 38.9-25.4 71.7-33.9 76.1-33.9 4.4 0 9.8 5.6 14.6 10.7 3.2 3.4 6.2 7.3 9 11.8"
-                }), /* @__PURE__ */ jsx("path", {
-                  strokeLinecap: "round",
-                  strokeLinejoin: "round",
-                  strokeWidth: "3",
-                  d: "M213 309.8a410 410 0 0 1 69.6-54.4c27.7-17.8 50.9-29.4 69.5-35m-73 247.1c2.6-.1 3.9.8 3.9 2.9 0 2-2.5 4.3-7.6 6.6m62.4-43c-.8 2.2-.6 3.7.7 4.6 1.3.9 4.6.5 9.9-1"
-                }), /* @__PURE__ */ jsx("path", {
-                  strokeLinecap: "round",
-                  strokeLinejoin: "round",
-                  strokeWidth: "3",
-                  d: "M283 471.7a56.3 56.3 0 0 0 35.3-8.3c12-7 19.5-15 22.2-24.3"
-                }), /* @__PURE__ */ jsx("path", {
-                  strokeLinecap: "round",
-                  strokeLinejoin: "round",
-                  strokeWidth: "3",
-                  d: "M216.6 441.5c-23 2-31.6 19.1-30.2 29 1.3 9.9 11 13.3 19.4 6.5-9.9 6.4-19.6 28.7-7.8 37.4 11.8 8.8 26.8-4.7 30.6-12.6-4.8 13.3-6.6 27.4 5.3 31.6 11.8 4.1 27.6-10.6 29.1-16.5-1 9.1 8.7 18.3 17 16.5 8.3-1.9 15.8-8.5 19-21.2 1.8 9 9.1 15 16.7 11.3 7.6-3.6 13.4-14.6 14.4-22.8-.7 10.1 5.8 18.4 15.8 15 10-3.5 12.1-18.9 10.7-25.8 2.4 8.8 8.6 13.6 17.2 8 8.5-5.5 8.7-13.6 6.6-25 4.5 6.7 13.4 9.7 19.4 2.9 6-6.8 3.7-14 0-20.2 11.7 5.2 20.2-6.3 15.8-17.2-4.4-10.8-15.8-14.9-28.8-14.9"
-                }), /* @__PURE__ */ jsx("path", {
-                  strokeLinecap: "round",
-                  strokeLinejoin: "round",
-                  strokeWidth: "3",
-                  d: "M186.2 464c-26.1 1.3-48-3.8-67.7-16.9-19.6-13-23-23.5-23-44.4s22-30.2 17.4-36.5c-4.5-6.2-14.6 1-20.2 8.5C87 382.3 82 397 75.2 394.4c-6.9-2.7-6.9-15.5-1.8-26.4 5.2-10.9 19.3-18.6 12.9-24.6-6.4-6.1-17.7 2-25 18.3-7.4 16.3-1 30.4-5.9 32.7-4.8 2.2-9-10.2-11.7-21.7-2.7-11.5-1.3-27.2-11.4-24.4-10.2 2.8-3 23.6.7 33.4 3.8 9.9 17.4 23.2 14.8 26.5-2.6 3.3-9.2-4.5-16.3-13.8-7-9.4-10.5-20.2-17.3-14.8-6.8 5.4 1.6 17 8.4 24 7 7 17 12.2 17 14.6 0 2.5-6.6 1-14-2.7-7.2-3.7-12.8-9-15.6-2.4-3 6.6 11.8 14.7 23.7 17.6 11.9 3 21.7 7.5 43.5 25.4 21.7 17.8 56 49 115.8 53.4"
-                }), /* @__PURE__ */ jsx("path", {
-                  strokeLinecap: "round",
-                  strokeLinejoin: "round",
-                  strokeWidth: "3",
-                  d: "M151 289.5a573.9 573.9 0 0 0-47.5 44.4c-13.4 15-28 30.8-21.2 38.1 6.7 7.3 20.4-9.8 37.6-33.3 11.4-15.7 21.8-32 31-49.2Zm-4.1-16.4v8.5m16.9-10-5.5 10m1.6 9 8.9-1.1"
-                }), /* @__PURE__ */ jsx("path", {
-                  strokeLinecap: "round",
-                  strokeLinejoin: "round",
-                  strokeWidth: "3",
-                  d: "M82.3 372a33.3 33.3 0 0 0 9.4 39c14.1 11.6 33 9.4 37.3 16.2 2.8 4.5-1.6 10.3-13.2 17.3m-35.2 15.7c-8.8 5-29 6.9-40 17.5-11 10.7-8.5 20.8 0 25.6 8.7 4.9 29.2-14.1 45.5-8 16.2 6.2 17.1 23.7 43.8 26.2 26.6 2.5 39-14.3 63.1-12m186.1-15.9c14.7-8.5 45.5-3.4 63.2-.4 17.7 3 43.3 6.3 55 .4 11.9-6 21.3-22 14.9-25.9-6.4-3.9-22.2 6.7-22.2 19.5 0 12.7 10.2 23.8 25 28.7 14.7 5 28.6-2.3 36.2-11.2m-16-138.6c-3.7-33-12.1-84.1-25.4-153.4-20-103.9-37.5-164.5-49.5-210.1-1-4.1-8.2-3.6-6.3 3.1 9.9 43.5 24.8 85.7 45.7 207 21 121.3 23.8 166.2 36.6 266.1 3 7.3 15 3.9 15-1.8l-9.7-67"
-                }), /* @__PURE__ */ jsx("path", {
-                  strokeLinecap: "round",
-                  strokeLinejoin: "round",
-                  strokeWidth: "3",
-                  d: "M482.8 129.4c-67-2.5-125.5 6.8-175.4 28-74.9 31.7-139.2 70.3-191.6 94.8-52.4 24.4-86 31.4-89.2 27-3.3-4.4 22.9-35 21.6-39.3-1.3-4.4-39.5-9.3-41.3-16.5-1.8-7.2 31.2-24.2 29.6-30.1-1.6-6-42.1-23.8-35.8-30.9 6.2-7 33.8-1.9 97.9-26 64.1-24 114.3-69.4 187.6-94.1 48.9-16.5 105.5-25.1 169.7-26M554 513.5a17 17 0 0 1-8.5 7.4 17 17 0 0 1-8.8 1.6m-119.9-75.1c26-.8 47-6.6 62.9-17.3 23.7-16.1 28.3-29.8 30-43.2 1.8-13.5-8-26.4-1-29.9 7-3.4 14.1 13.6 15.5 22.3m-97.7 111.5a243.3 243.3 0 0 0 61.7-26.1 146 146 0 0 0 41.5-37.1m14.2-9.6c3.3-3.3 5.3-6.2 6.1-8.6 1.2-3.7.8-9-6.1-9.4-7-.5-8.7 2.7-8.4 5.5.3 1.8 2.3 3.3 6 4.5"
-                }), /* @__PURE__ */ jsx("path", {
-                  strokeLinecap: "round",
-                  strokeLinejoin: "round",
-                  strokeWidth: "3",
-                  d: "M548.9 401.2c2.8-4.4 3.5-11.5-6.4-12.2-9.8-.7-11.5 5.6-10.2 8.9.8 2.2 2.6 3.1 5.3 3m10.8-22.2c1-3.4.3-11-9.6-11.6-9.8-.7-10.8 5.4-9.6 8.6.8 2.2 1.9 3 3.2 2.3"
-                }), /* @__PURE__ */ jsx("path", {
-                  strokeLinecap: "round",
-                  strokeLinejoin: "round",
-                  strokeWidth: "3",
-                  d: "M548.9 390.2c4-6 2.3-12.6-8.7-13.2-11-.6-14.4 6.2-13.2 10.7.7 3 2.8 4.2 6.1 3.7M87 367c4.2 2.2 14.2-11.4 9.7-13.7-4.4-2.2-14 11.5-9.8 13.7Z"
-                }), /* @__PURE__ */ jsx("path", {
-                  fill: "#FFF",
-                  strokeLinecap: "round",
-                  strokeLinejoin: "round",
-                  strokeWidth: "3",
-                  d: "M414 27.3c16 .3 22 19.5 22.5 38.1.5 18.7 1.9 41.4 9.6 41.5 4.1.1 4.8-4.7 5.6-9.3V97c.8-3.9 1.6-7.5 4.8-7.9 7.2-.9 5.2 26.8-9.7 27.2-7 .1-13.1-5-15.4-14.9-2.1-9.6-1.8-27.9-4.4-27.9-4.7 0-2.3 9.2-8.7 25.9a41.5 41.5 0 0 1-30.2 25.8c-12 2.9-24.3-.8-29.3-13.4-7.2-17.7 10-42.6 33.2-44.7 23.3-2 33.3.8 35.2-1.8 2-2.6 2.3-23.9-10.7-29.5-7.4-3.1-12 3.1-16.4 9.2l-.5.6c-3.1 4.3-6.2 8.4-10.2 8.5-9.7.4-14.2-9-10-12.4h.2c2.2-1.7 3.7-.5 5 1l.3.4.2.1.3.3c1.1 1.4 2.4 2.6 4 2.4 4.2-.5 8.6-18.8 24.6-18.6Zm-32.4 50.1c-13.7 6-21.1 24.7-14.2 34.8 7 10 25.5 6.6 35.2-3 9.7-9.7 15.7-32.2 13.8-34.6-2-2.4-21-3.2-34.8 2.8Zm-77.4 10.3c.5 5.5-18 6.8-20.8-2.8-2.7-9.6 5-22.6 21.6-33.4 16.6-10.7 32.4-8.6 36.6.7 2 4.5.2 12.1-3.5 17.5-3.8 5.7-9.8 9.3-9 11.1.7 1.8 5.5 3.2 9.4 8.8a24.6 24.6 0 0 1 2 21.6c-7.2 20.7-22.6 31.6-41.6 37.5-19 5.9-33.4-2-34.3-14.6-.8-12.6 9.6-22.5 14.2-18.9 4.6 3.6-4.9 9.5-5.3 16.6-.4 7.1 5.7 13.1 22.5 9.2 16.8-4 34.6-20.3 38-34.9 3.6-14.6-16.2-20.7-16.2-24.5 0-2.3 4.5-4.1 9.7-10.7 4.9-6.4 9.4-12.8 6.2-16.6-5-6-18.8-1.2-27.6 4.7-8.7 6-17.6 17.4-15.4 23 2.1 5.5 13 .2 13.5 5.7h0Zm-59.8-10.4c9-1.6 15.6 9.4 11 12.8-4.7 3.5-7.8-5.4-11.1-2.6h0-.2c-3.1 3-.4 15.3-.3 28.3 0 8.7-.2 18.8-.6 30.3 9 5.1 13.4 11.4 9.8 14.3-3.7 3-6.9-3-12-5.8a53 53 0 0 1-25.3 34.5c-20 12-37.6 5.7-42.4-6.4-4.8-12-4.8-31.7 20-42.3 24.6-10.6 40.2 3.3 41.8.8.8-6.4.8-9.5 1-16-6.8 4.9-13.2 6.4-19.4 4.6-9.2-2.6-13.1-15-20.8-16.8-7.6-1.9-10.9 9.3-16.1 7.5-5.3-1.7-3.3-8.5 1.2-11.7 4.5-3.3 11.9-8.4 20.1-4 3.1 1.7 5.8 5.2 8.6 8.5l.5.5c4.4 5.3 9.3 10 16.7 6.7 9.3-4.3 9-12.4 8.5-19.5v-.6a44 44 0 0 1-.5-6c.2-8 .6-15.5 9.5-17.1Zm-11 74c-.3-2.5-15.2-12-35.3-4.3-18.5 7.1-19.5 19.5-19.5 24.7v1.4c0 4 6 23 28.2 12.6a46.6 46.6 0 0 0 26.6-34.3h0Zm-79.8-21.9c1.7 5-9 5.6-11 14.6s.6 18.9 2.7 34.8c2.1 16 4.2 29.6 7.5 29.6 3.3.1 10.8-7 13.9-2.2 3 4.9-5.9 9.3-14.7 14-8.7 4.8-19.8 9-20.9 2.8-1.1-6.1 11.2-7.2 11.2-10.6 0-3.5-2.4-16-4.6-30.7-2.2-14.6-2.1-27-5.4-27-1.6 0-4.5 4-5.8 10-2.5 12.1-.5 30.8-10.4 33.2-10 2.3-12.6-5.6-18.6-13.2-6-7.6-13.3-13.5-15-11.3-1.7 2.3.4 13.3 3.1 29.6s5 29.4 7.5 32.1c2.4 2.8 10.5-3.9 13.8 1.2 3.2 5-7.4 9.8-16.6 12.7-9.1 2.9-17.9 6.6-19.2.6-1.3-6 11.1-6.8 12-10.7 1-4-2.9-15.8-5.6-32.8-2.7-17-3.3-31.2-6.8-34.9-3.4-3.7-18.5.8-19.3-6-.9-6.8 14-5.6 25.5-3.7a37 37 0 0 1 22.6 12.2c6.6 7.6 10 16 13.6 15.4 3.3-.6 3.3-10.9 5.7-22.8 1.8-9 5.4-19.1 10.7-25 12.2-13.7 22.5-16.9 24.2-11.9h0Z"
-                })]
-              })
-            })
-          }), /* @__PURE__ */ jsx("div", {
-            className: "flex flex-row justify-center",
-            children: svg_Trail.map((props, index) => /* @__PURE__ */ jsx(animated.div, {
-              style: props,
-              children: svgElements[index]
-            }, index))
-          }), /* @__PURE__ */ jsx(animated.div, {
-            style: text_Opacity,
-            className: "absolute align-baseline flex bottom-6 mx-auto  w-full justify-center ",
-            children: /* @__PURE__ */ jsxs("div", {
-              className: "flex ppsans gap-2 text-sm sm:text-lg",
-              children: [/* @__PURE__ */ jsx(animated.a, {
-                onMouseEnter: () => trigger(0),
-                style: boopstyle(0),
-                className: " rounded-full px-2 pb-0.5 border sm:border-2 ",
-                href: "https://instagram.com/russian.muse",
-                children: "инстаграм"
-              }), /* @__PURE__ */ jsx(animated.a, {
-                onMouseEnter: () => trigger(1),
-                style: boopstyle(1),
-                className: "rounded-full px-2 pb-0.5 border sm:border-2",
-                href: "mailto:pyudenkov@gmail.com",
-                children: "почта"
-              }), /* @__PURE__ */ jsx(animated.a, {
-                onMouseEnter: () => trigger(2),
-                style: boopstyle(2),
-                className: "rounded-full px-2 pb-0.5 border sm:border-2",
-                href: "url",
-                children: "о проекте"
+      className: "flex flex-col h-dvh snap-y snap-mandatory overflow-y-scroll select-none ppsans text-silver tracking-wide",
+      children: [/* @__PURE__ */ jsxs("section", {
+        className: "pb-10 xl:pb-20 border-t-2 flex flex-col justify-center  min-h-dvh relative max-h-dvh gradient snap-end ",
+        children: [/* @__PURE__ */ jsx(animated.div, {
+          style: about_Opacity,
+          className: "flex absolute w-full justify-center pointer-events-none",
+          children: /* @__PURE__ */ jsxs("div", {
+            className: "flex flex-col  gap-2 w-xs sm:w-md lg:w-lg text-lg lg:text-2xl",
+            children: [/* @__PURE__ */ jsx("p", {
+              children: "Муза (также с приставкой 'русская') - это проект, ставящий перед собой задачу поиска нового художественного языка, в котором шелковая ткань выступает альтернативой льняному холсту."
+            }), /* @__PURE__ */ jsx("p", {
+              children: "Исходной точкой поисков служит абстракция, как наиболее подходящяя декоративному характеру платка, однако только лишь ею не ограничивающаяся."
+            }), /* @__PURE__ */ jsx("p", {
+              children: "Все работы выполнены аэрографом с помощью чистых цветов красок Pebeo Setasilk. Края платков подшиты вручную шелковой нитью Gütermann.  "
+            })]
+          })
+        }), /* @__PURE__ */ jsx(animated.div, {
+          style: svg_Opacity,
+          className: " w-xs sm:w-md lg:w-lg  fill-silver stroke-silver self-center",
+          children: /* @__PURE__ */ jsx("svg", {
+            xmlns: "http://www.w3.org/2000/svg",
+            viewBox: "0 0 558 538",
+            children: /* @__PURE__ */ jsxs("g", {
+              fill: "none",
+              fillRule: "evenodd",
+              transform: "translate(2.3 2.2)",
+              children: [/* @__PURE__ */ jsx("path", {
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                strokeWidth: "3",
+                d: "M237.6 360.9c-17.4 18.4-46 31.2-55.3 23.8-9.4-7.3 41.2-66.5 111.4-115.8 70.3-49.2 126.7-56.8 136.4-49.2 9.8 7.6-1.8 24.2-27.6 43.5"
+              }), /* @__PURE__ */ jsx("path", {
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                strokeWidth: "3",
+                d: "M396.5 283.5c2.4 18.5-12.8 56-40.2 59-27.3 3.1-28.2-58.8-1.4-57.5 26.8 1.4 6.1 49.2-10.7 67.8-16.9 18.7-38.7 29-49 16.3-10.4-12.7-5.3-56.8 18.9-52.3 12.4 2.3 9 21.9-2 37.7-10.6 15.1-53.7 40.3-68.6 28.2-14.9-12-6.2-55.8 47.3-97.7 53.4-41.9 91.1-37.1 111.7-21.8 20.5 15.2 41 89.9-25.5 172.2-66.6 82.3-119.4 75.6-146 53.2-26.5-22.5-12-82.6 9.3-109.4"
+              }), /* @__PURE__ */ jsx("path", {
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                strokeWidth: "3",
+                d: "M280.3 399.6c-8.6 1-17.9 5-27.9 12.1-15 10.5-20 24.2-14.1 29.6 5.8 5.4 18 .1 24.9-6.5 6.9-6.6 8.8-16 4.5-18.7-4.2-2.6-10 0-14.2 6.3-4.3 6.2-2.6 18.4 7.8 8.1m34.7 0c2.4-3.5 4.3-4.8 5.6-3.9 2 1.5 1 9.3-3.5 15.2-4.4 6-13.8 14.4-17.8 10.4s1.4-23.7 21.3-45.1a149.8 149.8 0 0 1 48.8-34.4 103 103 0 0 0-18.4 24c-4.1 8.8-4.5 18 2.4 20.5 7 2.6 18-6.3 22.6-13.8 4.6-7.5 5-16.5 0-18.4-5-1.9-13 1.3-14.1 9.6-.8 5.5 1.7 7.9 7.5 7"
+              }), /* @__PURE__ */ jsx("ellipse", {
+                cx: "259.9",
+                cy: "427.1",
+                className: "fill-silver",
+                fillRule: "nonzero",
+                rx: "5.9",
+                ry: "4.3",
+                transform: "rotate(-56 259.9 427.1)"
+              }), /* @__PURE__ */ jsx("ellipse", {
+                cx: "350.7",
+                cy: "396.4",
+                className: "fill-silver",
+                fillRule: "nonzero",
+                rx: "6.9",
+                ry: "5",
+                transform: "rotate(-56 350.7 396.4)"
+              }), /* @__PURE__ */ jsx("path", {
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                strokeWidth: "3",
+                d: "M226.2 323.8a212 212 0 0 1-13.2-14c-6-7.1-11.6-14-11-18.2.6-4.2 19.7-23.7 58.5-49 38.9-25.4 71.7-33.9 76.1-33.9 4.4 0 9.8 5.6 14.6 10.7 3.2 3.4 6.2 7.3 9 11.8"
+              }), /* @__PURE__ */ jsx("path", {
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                strokeWidth: "3",
+                d: "M213 309.8a410 410 0 0 1 69.6-54.4c27.7-17.8 50.9-29.4 69.5-35m-73 247.1c2.6-.1 3.9.8 3.9 2.9 0 2-2.5 4.3-7.6 6.6m62.4-43c-.8 2.2-.6 3.7.7 4.6 1.3.9 4.6.5 9.9-1"
+              }), /* @__PURE__ */ jsx("path", {
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                strokeWidth: "3",
+                d: "M283 471.7a56.3 56.3 0 0 0 35.3-8.3c12-7 19.5-15 22.2-24.3"
+              }), /* @__PURE__ */ jsx("path", {
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                strokeWidth: "3",
+                d: "M216.6 441.5c-23 2-31.6 19.1-30.2 29 1.3 9.9 11 13.3 19.4 6.5-9.9 6.4-19.6 28.7-7.8 37.4 11.8 8.8 26.8-4.7 30.6-12.6-4.8 13.3-6.6 27.4 5.3 31.6 11.8 4.1 27.6-10.6 29.1-16.5-1 9.1 8.7 18.3 17 16.5 8.3-1.9 15.8-8.5 19-21.2 1.8 9 9.1 15 16.7 11.3 7.6-3.6 13.4-14.6 14.4-22.8-.7 10.1 5.8 18.4 15.8 15 10-3.5 12.1-18.9 10.7-25.8 2.4 8.8 8.6 13.6 17.2 8 8.5-5.5 8.7-13.6 6.6-25 4.5 6.7 13.4 9.7 19.4 2.9 6-6.8 3.7-14 0-20.2 11.7 5.2 20.2-6.3 15.8-17.2-4.4-10.8-15.8-14.9-28.8-14.9"
+              }), /* @__PURE__ */ jsx("path", {
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                strokeWidth: "3",
+                d: "M186.2 464c-26.1 1.3-48-3.8-67.7-16.9-19.6-13-23-23.5-23-44.4s22-30.2 17.4-36.5c-4.5-6.2-14.6 1-20.2 8.5C87 382.3 82 397 75.2 394.4c-6.9-2.7-6.9-15.5-1.8-26.4 5.2-10.9 19.3-18.6 12.9-24.6-6.4-6.1-17.7 2-25 18.3-7.4 16.3-1 30.4-5.9 32.7-4.8 2.2-9-10.2-11.7-21.7-2.7-11.5-1.3-27.2-11.4-24.4-10.2 2.8-3 23.6.7 33.4 3.8 9.9 17.4 23.2 14.8 26.5-2.6 3.3-9.2-4.5-16.3-13.8-7-9.4-10.5-20.2-17.3-14.8-6.8 5.4 1.6 17 8.4 24 7 7 17 12.2 17 14.6 0 2.5-6.6 1-14-2.7-7.2-3.7-12.8-9-15.6-2.4-3 6.6 11.8 14.7 23.7 17.6 11.9 3 21.7 7.5 43.5 25.4 21.7 17.8 56 49 115.8 53.4"
+              }), /* @__PURE__ */ jsx("path", {
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                strokeWidth: "3",
+                d: "M151 289.5a573.9 573.9 0 0 0-47.5 44.4c-13.4 15-28 30.8-21.2 38.1 6.7 7.3 20.4-9.8 37.6-33.3 11.4-15.7 21.8-32 31-49.2Zm-4.1-16.4v8.5m16.9-10-5.5 10m1.6 9 8.9-1.1"
+              }), /* @__PURE__ */ jsx("path", {
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                strokeWidth: "3",
+                d: "M82.3 372a33.3 33.3 0 0 0 9.4 39c14.1 11.6 33 9.4 37.3 16.2 2.8 4.5-1.6 10.3-13.2 17.3m-35.2 15.7c-8.8 5-29 6.9-40 17.5-11 10.7-8.5 20.8 0 25.6 8.7 4.9 29.2-14.1 45.5-8 16.2 6.2 17.1 23.7 43.8 26.2 26.6 2.5 39-14.3 63.1-12m186.1-15.9c14.7-8.5 45.5-3.4 63.2-.4 17.7 3 43.3 6.3 55 .4 11.9-6 21.3-22 14.9-25.9-6.4-3.9-22.2 6.7-22.2 19.5 0 12.7 10.2 23.8 25 28.7 14.7 5 28.6-2.3 36.2-11.2m-16-138.6c-3.7-33-12.1-84.1-25.4-153.4-20-103.9-37.5-164.5-49.5-210.1-1-4.1-8.2-3.6-6.3 3.1 9.9 43.5 24.8 85.7 45.7 207 21 121.3 23.8 166.2 36.6 266.1 3 7.3 15 3.9 15-1.8l-9.7-67"
+              }), /* @__PURE__ */ jsx("path", {
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                strokeWidth: "3",
+                d: "M482.8 129.4c-67-2.5-125.5 6.8-175.4 28-74.9 31.7-139.2 70.3-191.6 94.8-52.4 24.4-86 31.4-89.2 27-3.3-4.4 22.9-35 21.6-39.3-1.3-4.4-39.5-9.3-41.3-16.5-1.8-7.2 31.2-24.2 29.6-30.1-1.6-6-42.1-23.8-35.8-30.9 6.2-7 33.8-1.9 97.9-26 64.1-24 114.3-69.4 187.6-94.1 48.9-16.5 105.5-25.1 169.7-26M554 513.5a17 17 0 0 1-8.5 7.4 17 17 0 0 1-8.8 1.6m-119.9-75.1c26-.8 47-6.6 62.9-17.3 23.7-16.1 28.3-29.8 30-43.2 1.8-13.5-8-26.4-1-29.9 7-3.4 14.1 13.6 15.5 22.3m-97.7 111.5a243.3 243.3 0 0 0 61.7-26.1 146 146 0 0 0 41.5-37.1m14.2-9.6c3.3-3.3 5.3-6.2 6.1-8.6 1.2-3.7.8-9-6.1-9.4-7-.5-8.7 2.7-8.4 5.5.3 1.8 2.3 3.3 6 4.5"
+              }), /* @__PURE__ */ jsx("path", {
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                strokeWidth: "3",
+                d: "M548.9 401.2c2.8-4.4 3.5-11.5-6.4-12.2-9.8-.7-11.5 5.6-10.2 8.9.8 2.2 2.6 3.1 5.3 3m10.8-22.2c1-3.4.3-11-9.6-11.6-9.8-.7-10.8 5.4-9.6 8.6.8 2.2 1.9 3 3.2 2.3"
+              }), /* @__PURE__ */ jsx("path", {
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                strokeWidth: "3",
+                d: "M548.9 390.2c4-6 2.3-12.6-8.7-13.2-11-.6-14.4 6.2-13.2 10.7.7 3 2.8 4.2 6.1 3.7M87 367c4.2 2.2 14.2-11.4 9.7-13.7-4.4-2.2-14 11.5-9.8 13.7Z"
+              }), /* @__PURE__ */ jsx("path", {
+                fill: "#FFF",
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                strokeWidth: "3",
+                d: "M414 27.3c16 .3 22 19.5 22.5 38.1.5 18.7 1.9 41.4 9.6 41.5 4.1.1 4.8-4.7 5.6-9.3V97c.8-3.9 1.6-7.5 4.8-7.9 7.2-.9 5.2 26.8-9.7 27.2-7 .1-13.1-5-15.4-14.9-2.1-9.6-1.8-27.9-4.4-27.9-4.7 0-2.3 9.2-8.7 25.9a41.5 41.5 0 0 1-30.2 25.8c-12 2.9-24.3-.8-29.3-13.4-7.2-17.7 10-42.6 33.2-44.7 23.3-2 33.3.8 35.2-1.8 2-2.6 2.3-23.9-10.7-29.5-7.4-3.1-12 3.1-16.4 9.2l-.5.6c-3.1 4.3-6.2 8.4-10.2 8.5-9.7.4-14.2-9-10-12.4h.2c2.2-1.7 3.7-.5 5 1l.3.4.2.1.3.3c1.1 1.4 2.4 2.6 4 2.4 4.2-.5 8.6-18.8 24.6-18.6Zm-32.4 50.1c-13.7 6-21.1 24.7-14.2 34.8 7 10 25.5 6.6 35.2-3 9.7-9.7 15.7-32.2 13.8-34.6-2-2.4-21-3.2-34.8 2.8Zm-77.4 10.3c.5 5.5-18 6.8-20.8-2.8-2.7-9.6 5-22.6 21.6-33.4 16.6-10.7 32.4-8.6 36.6.7 2 4.5.2 12.1-3.5 17.5-3.8 5.7-9.8 9.3-9 11.1.7 1.8 5.5 3.2 9.4 8.8a24.6 24.6 0 0 1 2 21.6c-7.2 20.7-22.6 31.6-41.6 37.5-19 5.9-33.4-2-34.3-14.6-.8-12.6 9.6-22.5 14.2-18.9 4.6 3.6-4.9 9.5-5.3 16.6-.4 7.1 5.7 13.1 22.5 9.2 16.8-4 34.6-20.3 38-34.9 3.6-14.6-16.2-20.7-16.2-24.5 0-2.3 4.5-4.1 9.7-10.7 4.9-6.4 9.4-12.8 6.2-16.6-5-6-18.8-1.2-27.6 4.7-8.7 6-17.6 17.4-15.4 23 2.1 5.5 13 .2 13.5 5.7h0Zm-59.8-10.4c9-1.6 15.6 9.4 11 12.8-4.7 3.5-7.8-5.4-11.1-2.6h0-.2c-3.1 3-.4 15.3-.3 28.3 0 8.7-.2 18.8-.6 30.3 9 5.1 13.4 11.4 9.8 14.3-3.7 3-6.9-3-12-5.8a53 53 0 0 1-25.3 34.5c-20 12-37.6 5.7-42.4-6.4-4.8-12-4.8-31.7 20-42.3 24.6-10.6 40.2 3.3 41.8.8.8-6.4.8-9.5 1-16-6.8 4.9-13.2 6.4-19.4 4.6-9.2-2.6-13.1-15-20.8-16.8-7.6-1.9-10.9 9.3-16.1 7.5-5.3-1.7-3.3-8.5 1.2-11.7 4.5-3.3 11.9-8.4 20.1-4 3.1 1.7 5.8 5.2 8.6 8.5l.5.5c4.4 5.3 9.3 10 16.7 6.7 9.3-4.3 9-12.4 8.5-19.5v-.6a44 44 0 0 1-.5-6c.2-8 .6-15.5 9.5-17.1Zm-11 74c-.3-2.5-15.2-12-35.3-4.3-18.5 7.1-19.5 19.5-19.5 24.7v1.4c0 4 6 23 28.2 12.6a46.6 46.6 0 0 0 26.6-34.3h0Zm-79.8-21.9c1.7 5-9 5.6-11 14.6s.6 18.9 2.7 34.8c2.1 16 4.2 29.6 7.5 29.6 3.3.1 10.8-7 13.9-2.2 3 4.9-5.9 9.3-14.7 14-8.7 4.8-19.8 9-20.9 2.8-1.1-6.1 11.2-7.2 11.2-10.6 0-3.5-2.4-16-4.6-30.7-2.2-14.6-2.1-27-5.4-27-1.6 0-4.5 4-5.8 10-2.5 12.1-.5 30.8-10.4 33.2-10 2.3-12.6-5.6-18.6-13.2-6-7.6-13.3-13.5-15-11.3-1.7 2.3.4 13.3 3.1 29.6s5 29.4 7.5 32.1c2.4 2.8 10.5-3.9 13.8 1.2 3.2 5-7.4 9.8-16.6 12.7-9.1 2.9-17.9 6.6-19.2.6-1.3-6 11.1-6.8 12-10.7 1-4-2.9-15.8-5.6-32.8-2.7-17-3.3-31.2-6.8-34.9-3.4-3.7-18.5.8-19.3-6-.9-6.8 14-5.6 25.5-3.7a37 37 0 0 1 22.6 12.2c6.6 7.6 10 16 13.6 15.4 3.3-.6 3.3-10.9 5.7-22.8 1.8-9 5.4-19.1 10.7-25 12.2-13.7 22.5-16.9 24.2-11.9h0Z"
               })]
             })
+          })
+        }), /* @__PURE__ */ jsx("div", {
+          className: "flex flex-row justify-center ",
+          children: svg_Trail.map((props, index) => /* @__PURE__ */ jsx(animated.div, {
+            style: props,
+            children: svgElements[index]
+          }, index))
+        }), /* @__PURE__ */ jsxs(animated.div, {
+          style: text_Opacity,
+          className: "absolute bottom-0 gap-3 flex flex-col w-full",
+          children: [/* @__PURE__ */ jsxs("div", {
+            className: "flex flex-row gap-2 text-md sm:text-lg  w-fit self-center",
+            children: [/* @__PURE__ */ jsx(animated.a, {
+              onMouseEnter: () => trigger_boop(0),
+              style: boopstyle(0),
+              onClick: () => trigger_click(0),
+              className: "rounded-full px-2 pb-0.5 border-2 ",
+              href: "https://instagram.com/russian.muse",
+              children: "инстаграм"
+            }), /* @__PURE__ */ jsx(animated.a, {
+              onMouseEnter: () => trigger_boop(1),
+              style: boopstyle(1),
+              onClick: () => trigger_click(1),
+              className: "rounded-full px-2 pb-0.5 border-2",
+              href: "mailto:pyudenkov@gmail.com",
+              children: "почта"
+            }), /* @__PURE__ */ jsx(animated.a, {
+              onMouseEnter: () => trigger_boop(2),
+              style: boopstyle(2),
+              onClick: () => trigger_click(2),
+              className: "rounded-full px-2 pb-0.5 border-2",
+              href: "#",
+              children: "о проекте"
+            })]
+          }), /* @__PURE__ */ jsx("div", {
+            className: " text-center px-2 py-1 w-fit rounded-t-xl border-x-2 border-t-2 text-md sm:text-lg self-center pointer-events-none select-none",
+            children: "прокрутите вниз для просмотра"
           })]
-        })
+        })]
       }), memoizedCards]
     })
   });
@@ -10892,29 +10965,27 @@ const Card = React.memo(({
   card
 }) => {
   return /* @__PURE__ */ jsxs("section", {
-    className: "flex flex-col relative justify-center xl:justify-center px-6 py-6 xl:gap-1 gap-5 snap-end min-w-screen cursor-default gradient",
+    className: "flex  flex-col border-t-2 relative justify-center px-6 py-6 xl:gap-1 gap-5 snap-end min-h-dvh max-h-dvh cursor-default gradient",
     children: [/* @__PURE__ */ jsx("div", {
-      className: " xl:hidden block h-16"
-    }), /* @__PURE__ */ jsx("div", {
       className: "w-full mx-auto xl:p-1 max-w-3xl aspect-square min-h-64 min-w-64  ",
       children: /* @__PURE__ */ jsx("div", {
         style: {
           backgroundImage: `url(${card.url})`
         },
-        className: "w-full  h-full bg-no-repeat bg-contain bg-center"
+        className: "w-full h-full bg-no-repeat bg-contain bg-center"
       })
     }), /* @__PURE__ */ jsxs("div", {
-      className: " flex flex-col gap-0 justify-center text-silver ppsans ",
+      className: " flex flex-col gap-0 justify-center",
       children: [/* @__PURE__ */ jsx("div", {
         className: " self-center  text-2xl  sm:text-3xl tracking-wider ",
         children: card.title
       }), /* @__PURE__ */ jsxs("div", {
-        className: "flex flex-row gap-2 justify-center",
+        className: "flex flex-row gap-2 justify-center text-sm sm:text-lg tracking-wider",
         children: [/* @__PURE__ */ jsx("div", {
-          className: " self-center   text-sm sm:text-lg tracking-wider ",
+          className: " self-center",
           children: card.size
         }), /* @__PURE__ */ jsxs("div", {
-          className: " self-center    text-sm sm:text-lg tracking-wider ",
+          className: " self-center",
           children: ["(", card.year, ")"]
         })]
       })]

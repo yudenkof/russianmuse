@@ -608,6 +608,10 @@
 @layer components;
 
 @layer utilities {
+  .pointer-events-none {
+    pointer-events: none;
+  }
+
   .visible {
     visibility: visible;
   }
@@ -624,8 +628,8 @@
     position: static;
   }
 
-  .bottom-6 {
-    bottom: calc(var(--spacing) * 6);
+  .bottom-0 {
+    bottom: calc(var(--spacing) * 0);
   }
 
   .container {
@@ -670,14 +674,6 @@
     margin-top: calc(var(--spacing) * -2);
   }
 
-  .ml-1 {
-    margin-left: calc(var(--spacing) * 1);
-  }
-
-  .block {
-    display: block;
-  }
-
   .flex {
     display: flex;
   }
@@ -694,10 +690,6 @@
     aspect-ratio: 1;
   }
 
-  .h-16 {
-    height: calc(var(--spacing) * 16);
-  }
-
   .h-dvh {
     height: 100dvh;
   }
@@ -706,8 +698,20 @@
     height: 100%;
   }
 
+  .max-h-dvh {
+    max-height: 100dvh;
+  }
+
   .min-h-64 {
     min-height: calc(var(--spacing) * 64);
+  }
+
+  .min-h-dvh {
+    min-height: 100dvh;
+  }
+
+  .w-fit {
+    width: fit-content;
   }
 
   .w-full {
@@ -726,14 +730,6 @@
     min-width: calc(var(--spacing) * 64);
   }
 
-  .min-w-screen {
-    min-width: 100vw;
-  }
-
-  .basis-full {
-    flex-basis: 100%;
-  }
-
   .transform {
     transform: var(--tw-rotate-x) var(--tw-rotate-y) var(--tw-rotate-z) var(--tw-skew-x) var(--tw-skew-y);
   }
@@ -746,8 +742,8 @@
     resize: both;
   }
 
-  .snap-x {
-    scroll-snap-type: x var(--tw-scroll-snap-strictness);
+  .snap-y {
+    scroll-snap-type: y var(--tw-scroll-snap-strictness);
   }
 
   .snap-mandatory {
@@ -778,6 +774,10 @@
     gap: calc(var(--spacing) * 2);
   }
 
+  .gap-3 {
+    gap: calc(var(--spacing) * 3);
+  }
+
   .gap-5 {
     gap: calc(var(--spacing) * 5);
   }
@@ -786,8 +786,8 @@
     align-self: center;
   }
 
-  .overflow-x-scroll {
-    overflow-x: scroll;
+  .overflow-y-scroll {
+    overflow-y: scroll;
   }
 
   .scroll-smooth {
@@ -802,9 +802,24 @@
     border-radius: 3.40282e38px;
   }
 
-  .border {
+  .rounded-t-xl {
+    border-top-left-radius: var(--radius-xl);
+    border-top-right-radius: var(--radius-xl);
+  }
+
+  .border-2 {
     border-style: var(--tw-border-style);
-    border-width: 1px;
+    border-width: 2px;
+  }
+
+  .border-x-2 {
+    border-inline-style: var(--tw-border-style);
+    border-inline-width: 2px;
+  }
+
+  .border-t-2 {
+    border-top-style: var(--tw-border-style);
+    border-top-width: 2px;
   }
 
   .bg-contain {
@@ -835,6 +850,10 @@
     padding-inline: calc(var(--spacing) * 6);
   }
 
+  .py-1 {
+    padding-block: calc(var(--spacing) * 1);
+  }
+
   .py-6 {
     padding-block: calc(var(--spacing) * 6);
   }
@@ -843,12 +862,12 @@
     padding-bottom: calc(var(--spacing) * .5);
   }
 
-  .pb-12 {
-    padding-bottom: calc(var(--spacing) * 12);
+  .pb-10 {
+    padding-bottom: calc(var(--spacing) * 10);
   }
 
-  .align-baseline {
-    vertical-align: baseline;
+  .text-center {
+    text-align: center;
   }
 
   .text-2xl {
@@ -905,17 +924,8 @@
       margin-top: calc(var(--spacing) * -3);
     }
 
-    .sm\:ml-4 {
-      margin-left: calc(var(--spacing) * 4);
-    }
-
     .sm\:w-md {
       width: var(--container-md);
-    }
-
-    .sm\:border-2 {
-      border-style: var(--tw-border-style);
-      border-width: 2px;
     }
 
     .sm\:text-3xl {
@@ -941,20 +951,16 @@
   }
 
   @media (width >= 80rem) {
-    .xl\:hidden {
-      display: none;
-    }
-
-    .xl\:justify-center {
-      justify-content: center;
-    }
-
     .xl\:gap-1 {
       gap: calc(var(--spacing) * 1);
     }
 
     .xl\:p-1 {
       padding: calc(var(--spacing) * 1);
+    }
+
+    .xl\:pb-20 {
+      padding-bottom: calc(var(--spacing) * 20);
     }
   }
 }
@@ -970,37 +976,6 @@
 
 .gradient {
   background: radial-gradient(circle at bottom in oklch longer hue, oklch(100% 0 0), oklch(99% .1 67), oklch(100% .052 184) 100%);
-}
-
-.tooltip:hover .tooltiptext {
-  animation: .7s cubic-bezier(.25, .46, .45, .94) both glowing;
-}
-
-.tooltiptext {
-  opacity: 0;
-}
-
-@keyframes glowing {
-  from {
-    -webkit-opacity: 0;
-    opacity: 0;
-  }
-
-  to {
-    -webkit-opacity: 1;
-    opacity: 1;
-  }
-}
-
-.prosmotr:hover .tooltip_scroll {
-  opacity: 1;
-  transform: translateY(-30px);
-}
-
-.tooltip_scroll {
-  opacity: 0;
-  transition: all .3s ease-in-out;
-  transform: translateY(-35px);
 }
 
 @keyframes spin {
