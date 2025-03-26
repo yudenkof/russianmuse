@@ -10810,7 +10810,7 @@ function App() {
           style: about_Opacity,
           className: "flex absolute w-full justify-center pointer-events-none",
           children: /* @__PURE__ */ jsxs("div", {
-            className: "flex flex-col  gap-2 w-xs sm:w-md lg:w-lg text-lg lg:text-2xl",
+            className: "flex flex-col gap-2 w-xs sm:w-md lg:w-lg text-lg lg:text-2xl",
             children: [/* @__PURE__ */ jsx("p", {
               children: "Муза (также с приставкой 'русская') - это проект, ставящий перед собой задачу поиска нового художественного языка, в котором шелковая ткань выступает альтернативой льняному холсту."
             }), /* @__PURE__ */ jsx("p", {
