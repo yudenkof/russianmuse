@@ -10942,8 +10942,8 @@ function App() {
               style: boopstyle(1),
               onClick: () => trigger_click(1),
               className: "rounded-full px-2 pb-0.5 border-2",
-              href: "mailto:pyudenkov@gmail.com",
-              children: "почта"
+              href: "https://t.me/sampler2d",
+              children: "телеграм"
             }), /* @__PURE__ */ jsx(animated.a, {
               onMouseEnter: () => trigger_boop(2),
               style: boopstyle(2),
