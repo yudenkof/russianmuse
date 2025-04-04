@@ -10827,7 +10827,7 @@ function App() {
             viewBox: "0 0 558 538",
             children: /* @__PURE__ */ jsxs("g", {
               fill: "none",
-              "fill-rule": "evenodd",
+              fillRule: "evenodd",
               transform: "translate(1.97 1.5)",
               children: [/* @__PURE__ */ jsx("path", {
                 strokeLinecap: "round",
@@ -10848,7 +10848,7 @@ function App() {
                 cx: "349.24",
                 cy: "396.96",
                 className: "fill-silver",
-                "fill-rule": "nonzero",
+                fillRule: "nonzero",
                 rx: "6.93",
                 ry: "5.53",
                 transform: "rotate(-56 349.24 396.96)"
@@ -10856,7 +10856,7 @@ function App() {
                 cx: "258",
                 cy: "426.34",
                 className: "fill-silver",
-                "fill-rule": "nonzero",
+                fillRule: "nonzero",
                 rx: "6.93",
                 ry: "5.53",
                 transform: "rotate(-56 258 426.34)"
