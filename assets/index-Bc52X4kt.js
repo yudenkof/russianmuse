@@ -10934,26 +10934,26 @@ function App() {
               onMouseEnter: () => trigger_boop(0),
               style: boopstyle(0),
               onClick: () => trigger_click(0),
-              className: "rounded-full px-2 pb-0.5 border-2 ",
+              className: "rounded-full px-2 pb-0.5 border-2 bg-white",
               href: "https://instagram.com/russian.muse",
               children: "инстаграм"
             }), /* @__PURE__ */ jsx(animated.a, {
               onMouseEnter: () => trigger_boop(1),
               style: boopstyle(1),
               onClick: () => trigger_click(1),
-              className: "rounded-full px-2 pb-0.5 border-2",
+              className: "rounded-full px-2 pb-0.5 border-2 bg-white",
               href: "https://t.me/sampler2d",
               children: "телеграм"
             }), /* @__PURE__ */ jsx(animated.a, {
               onMouseEnter: () => trigger_boop(2),
               style: boopstyle(2),
               onClick: () => trigger_click(2),
-              className: "rounded-full px-2 pb-0.5 border-2",
+              className: "rounded-full px-2 pb-0.5 border-2 bg-white",
               href: "#",
               children: "о проекте"
             })]
           }), /* @__PURE__ */ jsx("div", {
-            className: " text-center px-2 py-1 w-fit rounded-t-xl border-x-2 border-t-2 text-md sm:text-lg self-center pointer-events-none select-none",
+            className: "bg-white text-center px-2 py-1 w-fit rounded-t-xl border-x-2 border-t-2 text-md sm:text-lg self-center pointer-events-none select-none",
             children: "прокрутите вниз для просмотра"
           })]
         })]
