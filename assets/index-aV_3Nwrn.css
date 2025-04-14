@@ -822,8 +822,8 @@
     border-top-width: 2px;
   }
 
-  .bg-\[\#fff\], .bg-\[\#ffffff\] {
-    background-color: #fff;
+  .bg-white {
+    background-color: var(--color-white);
   }
 
   .bg-contain {
@@ -984,10 +984,6 @@
 
 .neu {
   box-shadow: inset 0 -2px 4px #0a254059;
-}
-
-.whitebg {
-  background-color: oklch(100% 0 0);
 }
 
 @keyframes spin {
