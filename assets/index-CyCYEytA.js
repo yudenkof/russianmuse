@@ -10934,7 +10934,7 @@ function App() {
               onMouseEnter: () => trigger_boop(0),
               style: boopstyle(0),
               onClick: () => trigger_click(0),
-              className: "rounded-full px-2 pb-0.5 border-2 bg-[#ffffff]",
+              className: "rounded-full px-2 pb-0.5 border-2 whitebg",
               href: "https://instagram.com/russian.muse",
               children: "инстаграм"
             }), /* @__PURE__ */ jsx(animated.a, {
