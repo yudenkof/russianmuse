@@ -822,8 +822,8 @@
     border-top-width: 2px;
   }
 
-  .bg-white {
-    background-color: var(--color-white);
+  .bg-\[\#fff\], .bg-\[\#ffffff\] {
+    background-color: #fff;
   }
 
   .bg-contain {
