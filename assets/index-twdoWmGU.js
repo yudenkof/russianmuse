@@ -7015,60 +7015,66 @@ function requireClient() {
 var clientExports = requireClient();
 const cards = [{
   id: 1,
+  url: "/img/kubiki.webp",
+  title: "Кубики",
+  size: "65 x 65 см.",
+  year: "2025"
+}, {
+  id: 2,
   url: "/img/polyforms.webp",
   title: "Полиформы",
   size: "59 x 59 см.",
   year: "2023"
 }, {
-  id: 2,
+  id: 3,
   url: "/img/paperboats.webp",
   title: "Бумажные Кораблики",
   size: "65 x 65 см.",
   year: "2023"
 }, {
-  id: 3,
+  id: 4,
   url: "/img/squareofgradients.webp",
   title: "Площадь Градиентов",
   size: "60 x 60 см.",
   year: "2022"
 }, {
-  id: 4,
+  id: 5,
   url: "/img/squareofgradients2.webp",
   title: "Площадь Градиентов",
   size: "60 x 60 см.",
   year: "2023"
 }, {
-  id: 5,
+  id: 6,
   url: "/img/fuelrods.webp",
   title: "Топливные Cтержни",
   size: "60 x 60 см.",
   year: "2023"
 }, {
-  id: 6,
+  id: 7,
   url: "/img/redpoppies.webp",
   title: "Красные Маки",
   size: "65 x 65 см.",
   year: "2022"
 }, {
-  id: 7,
+  id: 8,
   url: "/img/springs.webp",
   title: "Пружины",
   size: "60 x 60 см.",
   year: "2023"
 }, {
-  id: 8,
+  id: 9,
   url: "/img/mugler.webp",
   title: "Mugler",
   size: "63 x 63 см.",
   year: "2022"
 }, {
-  id: 9,
+  id: 10,
   url: "/img/mugler2.webp",
   title: "Mugler",
   size: "63 x 63 см.",
   year: "2022"
 }, {
-  id: 10,
+  id: 11,
   url: "/img/scrunchies.webp",
   title: "Аксессуары",
   size: "",
