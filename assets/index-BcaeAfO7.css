@@ -341,6 +341,14 @@
     margin-top: calc(var(--spacing) * -2);
   }
 
+  .scrollbar-hide {
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   .flex {
     display: flex;
   }
