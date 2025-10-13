@@ -333,6 +333,10 @@
     z-index: 20;
   }
 
+  .z-100 {
+    z-index: 100;
+  }
+
   .mx-auto {
     margin-inline: auto;
   }
