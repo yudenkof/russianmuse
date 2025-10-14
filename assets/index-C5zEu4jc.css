@@ -517,14 +517,6 @@
     background-repeat: no-repeat;
   }
 
-  .fill-silver {
-    fill: var(--color-silver);
-  }
-
-  .stroke-silver {
-    stroke: var(--color-silver);
-  }
-
   .px-2 {
     padding-inline: calc(var(--spacing) * 2);
   }
