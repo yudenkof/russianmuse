@@ -585,6 +585,10 @@
     filter: var(--tw-blur, ) var(--tw-brightness, ) var(--tw-contrast, ) var(--tw-grayscale, ) var(--tw-hue-rotate, ) var(--tw-invert, ) var(--tw-saturate, ) var(--tw-sepia, ) var(--tw-drop-shadow, );
   }
 
+  .will-change-transform {
+    will-change: transform;
+  }
+
   .select-none {
     -webkit-user-select: none;
     user-select: none;
